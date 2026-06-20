@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<!-- saved from url=(0070)file:///Users/anveshsati/Downloads/Chrontext_Entity_Lens_Viewer_2.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>chrontext · Demo</title>
+<link rel="icon" type="image/png" href="./favicon.png">
+<style>
+  :root{
+    --bg:#0C1226; --bg2:#070B18; --card:#151E3A; --card2:#1B2647; --line:#2A3658;
+    --tx:#EEF2FB; --mut:#94A1C2; --dim:#64719B;
+    --aqua:#35E0C2; --indi:#8B93F8; --amber:#F5A524; --red:#F2576B; --green:#55D6A0;
+    --mono:'Consolas','SF Mono','Menlo',monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif;min-height:100vh}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 60px}
+
+  /* header */
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--aqua);font-weight:700}
+  h1{font-size:30px;margin:6px 0 4px}
+  .sub{color:var(--mut);font-size:14.5px;max-width:860px;line-height:1.45}
+  .sub b{color:var(--tx)}
+
+  /* lens pills */
+  .lensbar{margin:22px 0 8px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .lenslabel{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--dim);margin-right:4px}
+  .pill{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--mut);
+    border-radius:999px;padding:8px 16px;font-size:13.5px;font-family:inherit;display:flex;gap:8px;align-items:center;transition:all .15s}
+  .pill .kind{font-family:var(--mono);font-size:10px;letter-spacing:1px;color:var(--dim);text-transform:uppercase}
+  .pill:hover{border-color:var(--indi);color:var(--tx)}
+  .pill.on{border-color:var(--aqua);background:var(--card2);color:var(--aqua);box-shadow:0 0 0 1px var(--aqua) inset}
+  .pill.on .kind{color:var(--aqua)}
+
+  /* stat strip */
+  .stats{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 16px;min-width:150px}
+  .stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+  .stat .v{font-size:16px;font-weight:700;margin-top:3px}
+  .stat .v.aqua{color:var(--aqua)} .stat .v.indi{color:var(--indi)} .stat .v.amber{color:var(--amber)}
+
+  /* tabs */
+  .tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin-bottom:0}
+  .tab{cursor:pointer;background:none;border:none;color:var(--mut);font-family:var(--mono);font-size:12.5px;
+    letter-spacing:1.5px;padding:10px 18px;border-bottom:2px solid transparent;transition:all .15s}
+  .tab:hover{color:var(--tx)}
+  .tab.on{color:var(--aqua);border-bottom-color:var(--aqua)}
+  .view{display:none;padding-top:20px}
+  .view.on{display:block}
+
+  /* timeline */
+  .tl{position:relative;padding-left:34px}
+  .tl::before{content:"";position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:var(--line)}
+  .ev{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px 12px;margin-bottom:0}
+  .ev .dot{position:absolute;left:-30px;top:18px;width:14px;height:14px;border-radius:50%;border:3px solid var(--bg)}
+  .ev .row1{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+  .ev .type{font-weight:700;font-size:14.5px}
+  .ev .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:1px;padding:2.5px 8px;border-radius:5px;
+    background:var(--card2);border:1px solid var(--line);text-transform:uppercase}
+  .ev .ts{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim)}
+  .ev .sum{color:var(--mut);font-size:13px;margin-top:5px;line-height:1.4}
+  .ev .sigrow{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .ev .siglabel{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--dim)}
+  .ev .sigtrack{flex:0 0 130px;height:5px;border-radius:3px;background:var(--bg2);overflow:hidden}
+  .ev .sigfill{height:100%;border-radius:3px}
+  .ev .sigval{font-family:var(--mono);font-size:10.5px;color:var(--mut)}
+  .gap{position:relative;height:34px;display:flex;align-items:center;padding-left:6px}
+  .gap .glabel{font-family:var(--mono);font-size:10.5px;color:var(--dim);background:var(--bg);
+    padding:2px 8px;border:1px dashed var(--line);border-radius:6px}
+  .gap.accel .glabel{color:var(--amber);border-color:var(--amber)}
+  .gap .accel-tag{font-family:var(--mono);font-size:9.5px;color:var(--amber);margin-left:8px;letter-spacing:1px}
+
+  /* code views */
+  .codewrap{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:18px 20px;
+    font-family:var(--mono);font-size:12.5px;line-height:1.62;overflow-x:auto;white-space:pre}
+  .j-key{color:var(--aqua)} .j-str{color:#C9D4F2} .j-num{color:var(--indi)} .j-null{color:var(--red)}
+  .j-pun{color:var(--dim)}
+  .t-seq{color:var(--indi)} .t-ts{color:var(--dim)} .t-delta{color:var(--amber)} .t-src{color:var(--aqua)}
+  .t-drop{color:#3E4A6E;font-style:italic}
+  .t-head{color:var(--aqua);font-weight:700}
+
+  /* budget slider */
+  .budget{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:12px 18px;margin-bottom:14px;flex-wrap:wrap}
+  .budget .blabel{font-family:var(--mono);font-size:10.5px;letter-spacing:2px;color:var(--aqua)}
+  .budget input[type=range]{flex:1;min-width:160px;accent-color:#35E0C2}
+  .budget .bval{font-family:var(--mono);font-size:12px;color:var(--tx);min-width:210px}
+  .budget .bval b{color:var(--amber)}
+  .bnote{font-size:11.5px;color:var(--dim);font-style:italic;margin:-6px 0 14px 2px}
+
+  footer{margin-top:34px;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-wrap:wrap;gap:8px;
+    justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:1px}
+  footer .r{color:var(--aqua)}
+  @media (max-width:640px){ .ev .ts{margin-left:0;width:100%} h1{font-size:24px} }
+
+  /* ---- injected site header (matches landing page) ---- */
+  .siteheader{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:16px;
+    padding:11px 24px;background:rgba(7,11,24,.82);backdrop-filter:saturate(140%) blur(10px);
+    border-bottom:1px solid var(--line)}
+  .siteheader .sh-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--tx)}
+  .siteheader .sh-brand img{height:24px;width:auto;display:block}
+  .siteheader .sh-brand span{font-family:'Trebuchet MS','Segoe UI',system-ui,sans-serif;font-size:18px;font-weight:700;letter-spacing:-.02em}
+  .siteheader .sh-back{margin-left:auto;font-family:var(--mono);font-size:12.5px;letter-spacing:1px;
+    color:var(--mut);text-decoration:none;padding:7px 14px;border:1px solid var(--line);border-radius:8px;transition:border-color .15s,color .15s}
+  .siteheader .sh-back:hover{color:var(--aqua);border-color:var(--aqua)}
+</style>
+</head>
+<body>
+<header class="siteheader">
+  <a class="sh-brand" href="index.html" aria-label="Back to chrontext.ai home">
+    <img src="./chrontext-logo.png" alt="Chrontext logo">
+    <span>chrontext</span>
+  </a>
+  <a class="sh-back" href="index.html">&larr; Back to site</a>
+</header>
+<div class="wrap">
+
+  <div class="kicker">CHRONTEXT · INTERACTIVE DEMO</div>
+  <h1>Entity Lens viewer</h1>
+  <p class="sub">One event universe, stored once. Pick any <b>entity</b> and the same universe re-centers as that entity's <b>Chron</b> — a chronologically ordered, cross-system event stream with <b>cadence</b> (<span style="font-family:var(--mono)">delta_prev</span>) and a <b>retention prior</b> (<span style="font-family:var(--mono)">signal_strength</span>) computed at assembly. Three serializations of the same Chron: Timeline (for humans), JSON (for models), Text (for LLM context windows).</p>
+
+  <div class="lensbar">
+    <span class="lenslabel">ENTITY LENS →</span>
+    <button class="pill on" data-lens="acme" onclick="setLens(&#39;acme&#39;)"><span>Acme Corp</span><span class="kind">customer</span></button>
+    <button class="pill" data-lens="jordan" onclick="setLens(&#39;jordan&#39;)"><span>Jordan Lee</span><span class="kind">CS rep</span></button>
+    <button class="pill" data-lens="globex" onclick="setLens(&#39;globex&#39;)"><span>Globex Inc</span><span class="kind">customer</span></button>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="k">Lens</div><div class="v aqua">Acme Corp</div></div>
+    <div class="stat"><div class="k">Events</div><div class="v">17</div></div>
+    <div class="stat"><div class="k">Sources spanned</div><div class="v indi">6</div></div>
+    <div class="stat"><div class="k">Window</div><div class="v">2026-01-12 → <span style="color:var(--green)">live</span></div></div>
+    <div class="stat"><div class="k">Median gap</div><div class="v">7d</div></div>
+    <div class="stat"><div class="k">Recent cadence</div><div class="v aqua">steady</div></div></div>
+
+  <div class="tabs">
+    <button class="tab on" data-v="timeline" onclick="setView(&#39;timeline&#39;)">TIMELINE</button>
+    <button class="tab" data-v="json" onclick="setView(&#39;json&#39;)">JSON · canonical</button>
+    <button class="tab" data-v="text" onclick="setView(&#39;text&#39;)">TEXT · LLM-ready</button>
+  </div>
+
+  <div class="view on" id="v-timeline"><div class="tl" id="tl"><div class="ev">
+      <span class="dot" style="background:#8B93F8"></span>
+      <div class="row1">
+        <span class="type">contract_renewed</span>
+        <span class="badge" style="color:#8B93F8">CRM</span>
+        <span class="badge">commercial</span>
+        <span class="ts">seq 01 · 2026-01-12 14:05 UTC</span>
+      </div>
+      <div class="sum">Annual renewal signed — $120k ACV, 260 seats.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:90%;background:var(--red)"></span></span>
+        <span class="sigval">0.90</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 8d</span></div><div class="ev">
+      <span class="dot" style="background:#55D6A0"></span>
+      <div class="row1">
+        <span class="type">usage_baseline</span>
+        <span class="badge" style="color:#55D6A0">PRODUCT</span>
+        <span class="badge">usage</span>
+        <span class="ts">seq 02 · 2026-01-20 09:00 UTC</span>
+      </div>
+      <div class="sum">Weekly active users baseline: 214.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:30%;background:var(--aqua)"></span></span>
+        <span class="sigval">0.30</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 14d</span></div><div class="ev">
+      <span class="dot" style="background:#35E0C2"></span>
+      <div class="row1">
+        <span class="type">ticket_opened</span>
+        <span class="badge" style="color:#35E0C2">SUPPORT</span>
+        <span class="badge">service</span>
+        <span class="ts">seq 03 · 2026-02-03 16:42 UTC</span>
+      </div>
+      <div class="sum">P3 — SSO configuration question.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:45%;background:var(--aqua)"></span></span>
+        <span class="sigval">0.45</span>
+      </div>
+    </div><div class="gap accel"><span class="glabel">Δ 18h</span><span class="accel-tag">← accelerating</span></div><div class="ev">
+      <span class="dot" style="background:#35E0C2"></span>
+      <div class="row1">
+        <span class="type">ticket_resolved</span>
+        <span class="badge" style="color:#35E0C2">SUPPORT</span>
+        <span class="badge">service</span>
+        <span class="ts">seq 04 · 2026-02-04 10:18 UTC</span>
+      </div>
+      <div class="sum">Resolved in 17.6h — CSAT 5/5.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:35%;background:var(--aqua)"></span></span>
+        <span class="sigval">0.35</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 13d</span></div><div class="ev">
+      <span class="dot" style="background:#55D6A0"></span>
+      <div class="row1">
+        <span class="type">feature_adopted</span>
+        <span class="badge" style="color:#55D6A0">PRODUCT</span>
+        <span class="badge">usage</span>
+        <span class="ts">seq 05 · 2026-02-17 11:00 UTC</span>
+      </div>
+      <div class="sum">Workflow builder adopted by 3 teams.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:55.00000000000001%;background:var(--aqua)"></span></span>
+        <span class="sigval">0.55</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 13d</span></div><div class="ev">
+      <span class="dot" style="background:#8B93F8"></span>
+      <div class="row1">
+        <span class="type">qbr_held</span>
+        <span class="badge" style="color:#8B93F8">CRM</span>
+        <span class="badge">relationship</span>
+        <span class="ts">seq 06 · 2026-03-02 17:30 UTC</span>
+      </div>
+      <div class="sum">QBR green. Expansion interest: analytics add-on.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:70%;background:var(--amber)"></span></span>
+        <span class="sigval">0.70</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 26d</span></div><div class="ev">
+      <span class="dot" style="background:#55D6A0"></span>
+      <div class="row1">
+        <span class="type">usage_dip</span>
+        <span class="badge" style="color:#55D6A0">PRODUCT</span>
+        <span class="badge">usage</span>
+        <span class="ts">seq 07 · 2026-03-28 09:00 UTC</span>
+      </div>
+      <div class="sum">WAU −12% MoM (214 → 188).</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:70%;background:var(--amber)"></span></span>
+        <span class="sigval">0.70</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 9d</span></div><div class="ev">
+      <span class="dot" style="background:#35E0C2"></span>
+      <div class="row1">
+        <span class="type">ticket_opened</span>
+        <span class="badge" style="color:#35E0C2">SUPPORT</span>
+        <span class="badge">service</span>
+        <span class="ts">seq 08 · 2026-04-06 08:51 UTC</span>
+      </div>
+      <div class="sum">P2 — API rate-limit errors in production.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:70%;background:var(--amber)"></span></span>
+        <span class="sigval">0.70</span>
+      </div>
+    </div><div class="gap accel"><span class="glabel">Δ 3d</span><span class="accel-tag">← accelerating</span></div><div class="ev">
+      <span class="dot" style="background:#35E0C2"></span>
+      <div class="row1">
+        <span class="type">ticket_escalated</span>
+        <span class="badge" style="color:#35E0C2">SUPPORT</span>
+        <span class="badge">service</span>
+        <span class="ts">seq 09 · 2026-04-09 19:04 UTC</span>
+      </div>
+      <div class="sum">Escalated to engineering — SLA breached by 18h.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:85%;background:var(--red)"></span></span>
+        <span class="sigval">0.85</span>
+      </div>
+    </div><div class="gap accel"><span class="glabel">Δ 1.5d</span><span class="accel-tag">← accelerating</span></div><div class="ev">
+      <span class="dot" style="background:#C9D4F2"></span>
+      <div class="row1">
+        <span class="type">exec_email</span>
+        <span class="badge" style="color:#C9D4F2">EMAIL</span>
+        <span class="badge">relationship</span>
+        <span class="ts">seq 10 · 2026-04-11 07:32 UTC</span>
+      </div>
+      <div class="sum">VP Eng: “this is blocking our launch.”</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:80%;background:var(--red)"></span></span>
+        <span class="sigval">0.80</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 4d</span></div><div class="ev">
+      <span class="dot" style="background:#35E0C2"></span>
+      <div class="row1">
+        <span class="type">ticket_resolved</span>
+        <span class="badge" style="color:#35E0C2">SUPPORT</span>
+        <span class="badge">service</span>
+        <span class="ts">seq 11 · 2026-04-15 12:00 UTC</span>
+      </div>
+      <div class="sum">Patched — root cause: rate-limiter regression.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:50%;background:var(--aqua)"></span></span>
+        <span class="sigval">0.50</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 7d</span></div><div class="ev">
+      <span class="dot" style="background:#55D6A0"></span>
+      <div class="row1">
+        <span class="type">usage_dip</span>
+        <span class="badge" style="color:#55D6A0">PRODUCT</span>
+        <span class="badge">usage</span>
+        <span class="ts">seq 12 · 2026-04-22 09:00 UTC</span>
+      </div>
+      <div class="sum">WAU −9% further; API calls −31% vs March.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:80%;background:var(--red)"></span></span>
+        <span class="sigval">0.80</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 7d</span></div><div class="ev">
+      <span class="dot" style="background:#F2576B"></span>
+      <div class="row1">
+        <span class="type">nps_response</span>
+        <span class="badge" style="color:#F2576B">SURVEY</span>
+        <span class="badge">sentiment</span>
+        <span class="ts">seq 13 · 2026-04-29 14:10 UTC</span>
+      </div>
+      <div class="sum">NPS 3 (was 9) — “reliability concerns.”</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:85%;background:var(--red)"></span></span>
+        <span class="sigval">0.85</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 6d</span></div><div class="ev">
+      <span class="dot" style="background:#F5A524"></span>
+      <div class="row1">
+        <span class="type">seat_reduction</span>
+        <span class="badge" style="color:#F5A524">BILLING</span>
+        <span class="badge">commercial</span>
+        <span class="ts">seq 14 · 2026-05-05 11:45 UTC</span>
+      </div>
+      <div class="sum">Removed 40 of 260 seats at monthly true-up.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:90%;background:var(--red)"></span></span>
+        <span class="sigval">0.90</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 7d</span></div><div class="ev">
+      <span class="dot" style="background:#8B93F8"></span>
+      <div class="row1">
+        <span class="type">champion_departed</span>
+        <span class="badge" style="color:#8B93F8">CRM</span>
+        <span class="badge">relationship</span>
+        <span class="ts">seq 15 · 2026-05-12 16:00 UTC</span>
+      </div>
+      <div class="sum">Champion (Dir of Ops) left the company.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:95%;background:var(--red)"></span></span>
+        <span class="sigval">0.95</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 7d</span></div><div class="ev">
+      <span class="dot" style="background:#C9D4F2"></span>
+      <div class="row1">
+        <span class="type">meeting_declined</span>
+        <span class="badge" style="color:#C9D4F2">EMAIL</span>
+        <span class="badge">relationship</span>
+        <span class="ts">seq 16 · 2026-05-19 10:30 UTC</span>
+      </div>
+      <div class="sum">Monthly check-in declined — no reschedule.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:75%;background:var(--amber)"></span></span>
+        <span class="sigval">0.75</span>
+      </div>
+    </div><div class="gap"><span class="glabel">Δ 14d</span></div><div class="ev">
+      <span class="dot" style="background:#F5A524"></span>
+      <div class="row1">
+        <span class="type">invoice_late</span>
+        <span class="badge" style="color:#F5A524">BILLING</span>
+        <span class="badge">commercial</span>
+        <span class="ts">seq 17 · 2026-06-02 08:00 UTC</span>
+      </div>
+      <div class="sum">Invoice 14 days past due — first occurrence.</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:70%;background:var(--amber)"></span></span>
+        <span class="sigval">0.70</span>
+      </div>
+    </div></div></div>
+
+  <div class="view" id="v-json"><div class="codewrap" id="jsonout"><span class="j-pun">{</span>
+  <span class="j-key">"schema"</span><span class="j-pun">:</span> <span class="j-str">"chron/1.0"</span><span class="j-pun">,</span>
+  <span class="j-key">"entity"</span><span class="j-pun">:</span> <span class="j-pun">{</span> <span class="j-key">"id"</span><span class="j-pun">:</span> <span class="j-str">"acct_8814"</span><span class="j-pun">,</span> <span class="j-key">"kind"</span><span class="j-pun">:</span> <span class="j-str">"customer"</span><span class="j-pun">,</span> <span class="j-key">"name"</span><span class="j-pun">:</span> <span class="j-str">"Acme Corp"</span> <span class="j-pun">}</span><span class="j-pun">,</span>
+  <span class="j-key">"window"</span><span class="j-pun">:</span> <span class="j-pun">{</span> <span class="j-key">"from"</span><span class="j-pun">:</span> <span class="j-str">"2026-01-12T14:05Z"</span><span class="j-pun">,</span> <span class="j-key">"to"</span><span class="j-pun">:</span> <span class="j-null">null</span> <span class="j-pun">}</span><span class="j-pun">,</span>  <span class="j-pun">// to: null = live</span>
+  <span class="j-key">"projection"</span><span class="j-pun">:</span> <span class="j-pun">{</span> <span class="j-key">"lens"</span><span class="j-pun">:</span> <span class="j-str">"acme"</span><span class="j-pun">,</span> <span class="j-key">"as_of"</span><span class="j-pun">:</span> <span class="j-str">"2026-06-10T00:00:00Z"</span> <span class="j-pun">}</span><span class="j-pun">,</span>
+  <span class="j-key">"events"</span><span class="j-pun">:</span> <span class="j-pun">[</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">1</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-01-12T14:05Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"contract_renewed"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"commercial"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"crm"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-null">null</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-null">null</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.90</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"acv_usd":120000,"seats":260}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Annual renewal signed — $120k ACV, 260 seats."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">2</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-01-20T09:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"usage_baseline"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"usage"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"product"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">672900</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"8d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.30</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"wau":214}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Weekly active users baseline: 214."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">3</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-02-03T16:42Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"ticket_opened"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"service"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"support"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">1237320</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"14d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.45</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"priority":"P3","ticket":"ZD-5512"}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"P3 — SSO configuration question."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">4</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-02-04T10:18Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"ticket_resolved"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"service"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"support"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">63360</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"18h"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.35</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"ticket":"ZD-5512","csat":5}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Resolved in 17.6h — CSAT 5/5."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">5</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-02-17T11:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"feature_adopted"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"usage"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"product"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">1125720</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"13d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.55</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"feature":"workflow_builder","teams":3}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Workflow builder adopted by 3 teams."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">6</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-03-02T17:30Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"qbr_held"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"relationship"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"crm"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">1146600</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"13d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.70</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"health":"green"}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"QBR green. Expansion interest: analytics add-on."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">7</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-03-28T09:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"usage_dip"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"usage"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"product"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">2215800</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"26d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.70</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"wau":188,"delta_pct":-12}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"WAU −12% MoM (214 → 188)."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">8</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-04-06T08:51Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"ticket_opened"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"service"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"support"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">777060</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"9d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.70</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"priority":"P2","ticket":"ZD-6093"}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"P2 — API rate-limit errors in production."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">9</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-04-09T19:04Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"ticket_escalated"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"service"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"support"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">295980</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"3d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.85</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"ticket":"ZD-6093","sla_breach_h":18}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Escalated to engineering — SLA breached by 18h."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">10</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-04-11T07:32Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"exec_email"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"relationship"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"email"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">131280</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"1.5d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.80</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"sentiment":-0.7}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"VP Eng: “this is blocking our launch.”"</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">11</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-04-15T12:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"ticket_resolved"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"service"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"support"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">361680</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"4d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.50</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"ticket":"ZD-6093"}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Patched — root cause: rate-limiter regression."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">12</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-04-22T09:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"usage_dip"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"usage"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"product"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">594000</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"7d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.80</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"wau":171,"api_delta_pct":-31}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"WAU −9% further; API calls −31% vs March."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">13</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-04-29T14:10Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"nps_response"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"sentiment"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"survey"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">623400</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"7d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.85</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"nps":3,"prev_nps":9}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"NPS 3 (was 9) — “reliability concerns.”"</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">14</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-05-05T11:45Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"seat_reduction"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"commercial"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"billing"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">509700</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"6d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.90</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"seats_removed":40,"seats":220}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Removed 40 of 260 seats at monthly true-up."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">15</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-05-12T16:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"champion_departed"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"relationship"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"crm"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">620100</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"7d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.95</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"role":"Director of Ops"}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Champion (Dir of Ops) left the company."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">16</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-05-19T10:30Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"meeting_declined"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"relationship"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"email"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">585000</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"7d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.75</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-str">"rep_0027"</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Monthly check-in declined — no reschedule."</span>
+    <span class="j-pun">}</span><span class="j-pun">,</span>
+    <span class="j-pun">{</span> <span class="j-key">"seq"</span><span class="j-pun">:</span> <span class="j-num">17</span><span class="j-pun">,</span> <span class="j-key">"ts"</span><span class="j-pun">:</span> <span class="j-str">"2026-06-02T08:00Z"</span><span class="j-pun">,</span> <span class="j-key">"event_type"</span><span class="j-pun">:</span> <span class="j-str">"invoice_late"</span><span class="j-pun">,</span> <span class="j-key">"category"</span><span class="j-pun">:</span> <span class="j-str">"commercial"</span><span class="j-pun">,</span> <span class="j-key">"source"</span><span class="j-pun">:</span> <span class="j-str">"billing"</span><span class="j-pun">,</span>
+      <span class="j-key">"delta_prev_seconds"</span><span class="j-pun">:</span> <span class="j-num">1200600</span><span class="j-pun">,</span> <span class="j-key">"interval"</span><span class="j-pun">:</span> <span class="j-str">"14d"</span><span class="j-pun">,</span> <span class="j-key">"signal_strength"</span><span class="j-pun">:</span> <span class="j-num">0.70</span><span class="j-pun">,</span>
+      <span class="j-key">"attributes"</span><span class="j-pun">:</span> <span class="j-pun"></span>{"days_late":14}<span class="j-pun">,</span>
+      <span class="j-key">"related_entities"</span><span class="j-pun">:</span> <span class="j-pun">[</span><span class="j-pun">]</span><span class="j-pun">,</span>
+      <span class="j-key">"text_summary"</span><span class="j-pun">:</span> <span class="j-str">"Invoice 14 days past due — first occurrence."</span>
+    <span class="j-pun">}</span>
+  <span class="j-pun">]</span>
+<span class="j-pun">}</span></div></div>
+
+  <div class="view" id="v-text">
+    <div class="budget">
+      <span class="blabel">CONTEXT BUDGET</span>
+      <input type="range" id="budget" min="4" max="17" value="17" oninput="renderText()">
+      <span class="bval" id="bval">17 / 17 events kept · <b>0 truncated</b></span>
+    </div>
+    <p class="bnote">Truncation is driven by signal_strength — the retention prior decides what survives a tight context window. Dropped events are shown dimmed. (As served by POST /v1/context.)</p>
+    <div class="codewrap" id="textout"><span class="t-head">CHRON</span>  Acme Corp · customer   <span class="t-ts">as_of 2026-06-10 · window 2026-01-12 → live</span>
+<span class="t-head">NOTE</span>   truncated to 17 events by retention prior (signal_strength)
+
+<span class="t-seq">[01]</span> <span class="t-ts">2026-01-12</span> <span class="t-delta">(Δ —)</span> <span class="t-src">CRM</span> contract_renewed — Annual renewal signed — $120k ACV, 260 seats.
+<span class="t-seq">[02]</span> <span class="t-ts">2026-01-20</span> <span class="t-delta">(Δ 8d)</span> <span class="t-src">PRODUCT</span> usage_baseline — Weekly active users baseline: 214.
+<span class="t-seq">[03]</span> <span class="t-ts">2026-02-03</span> <span class="t-delta">(Δ 14d)</span> <span class="t-src">SUPPORT</span> ticket_opened — P3 — SSO configuration question.
+<span class="t-seq">[04]</span> <span class="t-ts">2026-02-04</span> <span class="t-delta">(Δ 18h)</span> <span class="t-src">SUPPORT</span> ticket_resolved — Resolved in 17.6h — CSAT 5/5.
+<span class="t-seq">[05]</span> <span class="t-ts">2026-02-17</span> <span class="t-delta">(Δ 13d)</span> <span class="t-src">PRODUCT</span> feature_adopted — Workflow builder adopted by 3 teams.
+<span class="t-seq">[06]</span> <span class="t-ts">2026-03-02</span> <span class="t-delta">(Δ 13d)</span> <span class="t-src">CRM</span> qbr_held — QBR green. Expansion interest: analytics add-on.
+<span class="t-seq">[07]</span> <span class="t-ts">2026-03-28</span> <span class="t-delta">(Δ 26d)</span> <span class="t-src">PRODUCT</span> usage_dip — WAU −12% MoM (214 → 188).
+<span class="t-seq">[08]</span> <span class="t-ts">2026-04-06</span> <span class="t-delta">(Δ 9d)</span> <span class="t-src">SUPPORT</span> ticket_opened — P2 — API rate-limit errors in production.
+<span class="t-seq">[09]</span> <span class="t-ts">2026-04-09</span> <span class="t-delta">(Δ 3d)</span> <span class="t-src">SUPPORT</span> ticket_escalated — Escalated to engineering — SLA breached by 18h.
+<span class="t-seq">[10]</span> <span class="t-ts">2026-04-11</span> <span class="t-delta">(Δ 1.5d)</span> <span class="t-src">EMAIL</span> exec_email — VP Eng: “this is blocking our launch.”
+<span class="t-seq">[11]</span> <span class="t-ts">2026-04-15</span> <span class="t-delta">(Δ 4d)</span> <span class="t-src">SUPPORT</span> ticket_resolved — Patched — root cause: rate-limiter regression.
+<span class="t-seq">[12]</span> <span class="t-ts">2026-04-22</span> <span class="t-delta">(Δ 7d)</span> <span class="t-src">PRODUCT</span> usage_dip — WAU −9% further; API calls −31% vs March.
+<span class="t-seq">[13]</span> <span class="t-ts">2026-04-29</span> <span class="t-delta">(Δ 7d)</span> <span class="t-src">SURVEY</span> nps_response — NPS 3 (was 9) — “reliability concerns.”
+<span class="t-seq">[14]</span> <span class="t-ts">2026-05-05</span> <span class="t-delta">(Δ 6d)</span> <span class="t-src">BILLING</span> seat_reduction — Removed 40 of 260 seats at monthly true-up.
+<span class="t-seq">[15]</span> <span class="t-ts">2026-05-12</span> <span class="t-delta">(Δ 7d)</span> <span class="t-src">CRM</span> champion_departed — Champion (Dir of Ops) left the company.
+<span class="t-seq">[16]</span> <span class="t-ts">2026-05-19</span> <span class="t-delta">(Δ 7d)</span> <span class="t-src">EMAIL</span> meeting_declined — Monthly check-in declined — no reschedule.
+<span class="t-seq">[17]</span> <span class="t-ts">2026-06-02</span> <span class="t-delta">(Δ 14d)</span> <span class="t-src">BILLING</span> invoice_late — Invoice 14 days past due — first occurrence.
+</div>
+  </div>
+
+  <footer>
+    <span>CHRON SCHEMA v1.0 · seq &amp; delta are projection-relative — computed at assembly, not stored per copy</span>
+    <span class="r">chrontext.ai</span>
+  </footer>
+</div>
+
+<script>
+// ---------- one event universe ----------
+const ENT = {
+  acme:   {id:"acct_8814", name:"Acme Corp",  kind:"customer"},
+  globex: {id:"acct_9102", name:"Globex Inc", kind:"customer"},
+  initech:{id:"acct_7730", name:"Initech",    kind:"customer"},
+  jordan: {id:"rep_0027",  name:"Jordan Lee", kind:"cs_rep"}
+};
+const SRC = {
+  crm:     {label:"CRM",      color:"#8B93F8"},
+  support: {label:"SUPPORT",  color:"#35E0C2"},
+  product: {label:"PRODUCT",  color:"#55D6A0"},
+  billing: {label:"BILLING",  color:"#F5A524"},
+  email:   {label:"EMAIL",    color:"#C9D4F2"},
+  survey:  {label:"SURVEY",   color:"#F2576B"}
+};
+// signal_strength = data-derived retention prior (illustrative values)
+const U = [
+ {ts:"2026-01-12T14:05Z", src:"crm",     cat:"commercial", type:"contract_renewed",  sig:.90, ents:["acme","jordan"],   sum:"Annual renewal signed — $120k ACV, 260 seats.", attrs:{acv_usd:120000,seats:260}},
+ {ts:"2026-01-20T09:00Z", src:"product", cat:"usage",      type:"usage_baseline",    sig:.30, ents:["acme"],            sum:"Weekly active users baseline: 214.", attrs:{wau:214}},
+ {ts:"2026-02-03T16:42Z", src:"support", cat:"service",    type:"ticket_opened",     sig:.45, ents:["acme","jordan"],   sum:"P3 — SSO configuration question.", attrs:{priority:"P3",ticket:"ZD-5512"}},
+ {ts:"2026-02-04T10:18Z", src:"support", cat:"service",    type:"ticket_resolved",   sig:.35, ents:["acme","jordan"],   sum:"Resolved in 17.6h — CSAT 5/5.", attrs:{ticket:"ZD-5512",csat:5}},
+ {ts:"2026-02-17T11:00Z", src:"product", cat:"usage",      type:"feature_adopted",   sig:.55, ents:["acme"],            sum:"Workflow builder adopted by 3 teams.", attrs:{feature:"workflow_builder",teams:3}},
+ {ts:"2026-02-25T15:00Z", src:"crm",     cat:"lifecycle",  type:"onboarding_complete",sig:.60, ents:["initech","jordan"],sum:"Initech onboarding complete — 45 days, on schedule.", attrs:{days:45}},
+ {ts:"2026-03-02T17:30Z", src:"crm",     cat:"relationship",type:"qbr_held",         sig:.70, ents:["acme","jordan"],   sum:"QBR green. Expansion interest: analytics add-on.", attrs:{health:"green"}},
+ {ts:"2026-03-28T09:00Z", src:"product", cat:"usage",      type:"usage_dip",         sig:.70, ents:["acme"],            sum:"WAU −12% MoM (214 → 188).", attrs:{wau:188,delta_pct:-12}},
+ {ts:"2026-04-03T13:20Z", src:"crm",     cat:"commercial", type:"deal_closed",       sig:.80, ents:["globex","jordan"], sum:"Globex expansion closed — +$48k ARR.", attrs:{arr_delta_usd:48000}},
+ {ts:"2026-04-06T08:51Z", src:"support", cat:"service",    type:"ticket_opened",     sig:.70, ents:["acme","jordan"],   sum:"P2 — API rate-limit errors in production.", attrs:{priority:"P2",ticket:"ZD-6093"}},
+ {ts:"2026-04-09T19:04Z", src:"support", cat:"service",    type:"ticket_escalated",  sig:.85, ents:["acme","jordan"],   sum:"Escalated to engineering — SLA breached by 18h.", attrs:{ticket:"ZD-6093",sla_breach_h:18}},
+ {ts:"2026-04-11T07:32Z", src:"email",   cat:"relationship",type:"exec_email",       sig:.80, ents:["acme","jordan"],   sum:"VP Eng: “this is blocking our launch.”", attrs:{sentiment:-0.7}},
+ {ts:"2026-04-15T12:00Z", src:"support", cat:"service",    type:"ticket_resolved",   sig:.50, ents:["acme"],            sum:"Patched — root cause: rate-limiter regression.", attrs:{ticket:"ZD-6093"}},
+ {ts:"2026-04-18T10:00Z", src:"support", cat:"service",    type:"csat_kudos",        sig:.45, ents:["initech","jordan"],sum:"Initech CSAT 5/5 — “fastest support we've had.”", attrs:{csat:5}},
+ {ts:"2026-04-22T09:00Z", src:"product", cat:"usage",      type:"usage_dip",         sig:.80, ents:["acme"],            sum:"WAU −9% further; API calls −31% vs March.", attrs:{wau:171,api_delta_pct:-31}},
+ {ts:"2026-04-29T14:10Z", src:"survey",  cat:"sentiment",  type:"nps_response",      sig:.85, ents:["acme"],            sum:"NPS 3 (was 9) — “reliability concerns.”", attrs:{nps:3,prev_nps:9}},
+ {ts:"2026-05-02T09:00Z", src:"product", cat:"usage",      type:"usage_spike",       sig:.60, ents:["globex"],          sum:"Globex WAU +22% after expansion go-live.", attrs:{wau_delta_pct:22}},
+ {ts:"2026-05-05T11:45Z", src:"billing", cat:"commercial", type:"seat_reduction",    sig:.90, ents:["acme"],            sum:"Removed 40 of 260 seats at monthly true-up.", attrs:{seats_removed:40,seats:220}},
+ {ts:"2026-05-12T16:00Z", src:"crm",     cat:"relationship",type:"champion_departed",sig:.95, ents:["acme","jordan"],   sum:"Champion (Dir of Ops) left the company.", attrs:{role:"Director of Ops"}},
+ {ts:"2026-05-19T10:30Z", src:"email",   cat:"relationship",type:"meeting_declined", sig:.75, ents:["acme","jordan"],   sum:"Monthly check-in declined — no reschedule.", attrs:{}},
+ {ts:"2026-05-21T15:00Z", src:"crm",     cat:"relationship",type:"qbr_held",         sig:.60, ents:["globex","jordan"], sum:"Globex QBR — green, advocacy candidate.", attrs:{health:"green"}},
+ {ts:"2026-06-02T08:00Z", src:"billing", cat:"commercial", type:"invoice_late",      sig:.70, ents:["acme"],            sum:"Invoice 14 days past due — first occurrence.", attrs:{days_late:14}},
+ {ts:"2026-06-05T11:25Z", src:"support", cat:"service",    type:"ticket_opened",     sig:.40, ents:["globex","jordan"], sum:"P3 — SSO group-mapping question.", attrs:{priority:"P3",ticket:"ZD-6711"}}
+];
+
+let lens = "acme", viewName = "timeline";
+
+// ---------- projection: compute the Chron for the chosen lens ----------
+function project(lensKey){
+  const evs = U.filter(e => e.ents.includes(lensKey))
+               .sort((a,b)=> new Date(a.ts) - new Date(b.ts));
+  let prev = null;
+  return evs.map((e,i)=>{
+    const t = new Date(e.ts);
+    const delta = prev ? Math.round((t - prev)/1000) : null;
+    prev = t;
+    return {...e, seq:i+1, delta_prev_seconds: delta};
+  });
+}
+function human(sec){
+  if(sec===null) return "—";
+  const d = sec/86400;
+  if(d>=2) return Math.round(d)+"d";
+  if(d>=1) return d.toFixed(1)+"d";
+  const h = sec/3600;
+  if(h>=1) return Math.round(h)+"h";
+  return Math.max(1,Math.round(sec/60))+"m";
+}
+function median(a){ const s=[...a].sort((x,y)=>x-y); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }
+function sigColor(s){ return s>=0.8 ? "var(--red)" : s>=0.6 ? "var(--amber)" : "var(--aqua)"; }
+function fdate(ts){ return ts.slice(0,10); }
+
+// ---------- renderers ----------
+function renderStats(ch){
+  const deltas = ch.filter(e=>e.delta_prev_seconds!==null).map(e=>e.delta_prev_seconds);
+  const med = deltas.length? median(deltas):0;
+  const last3 = deltas.slice(-3); const recent = last3.length? last3.reduce((a,b)=>a+b,0)/last3.length : 0;
+  const cadence = recent && med ? (recent < med*0.66 ? "accelerating" : recent > med*1.5 ? "slowing" : "steady") : "—";
+  const cls = cadence==="accelerating" ? "amber" : "aqua";
+  const srcs = new Set(ch.map(e=>e.src)).size;
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="k">Lens</div><div class="v aqua">${ENT[lens].name}</div></div>
+    <div class="stat"><div class="k">Events</div><div class="v">${ch.length}</div></div>
+    <div class="stat"><div class="k">Sources spanned</div><div class="v indi">${srcs}</div></div>
+    <div class="stat"><div class="k">Window</div><div class="v">${fdate(ch[0].ts)} → <span style="color:var(--green)">live</span></div></div>
+    <div class="stat"><div class="k">Median gap</div><div class="v">${human(med)}</div></div>
+    <div class="stat"><div class="k">Recent cadence</div><div class="v ${cls}">${cadence}</div></div>`;
+}
+
+function renderTimeline(ch){
+  const deltas = ch.filter(e=>e.delta_prev_seconds!==null).map(e=>e.delta_prev_seconds);
+  const med = deltas.length? median(deltas):0;
+  let html = "";
+  ch.forEach((e)=>{
+    if(e.delta_prev_seconds!==null){
+      const accel = med && e.delta_prev_seconds < med*0.5;
+      html += `<div class="gap${accel?" accel":""}"><span class="glabel">Δ ${human(e.delta_prev_seconds)}</span>${accel?'<span class="accel-tag">← accelerating</span>':""}</div>`;
+    }
+    const sc = SRC[e.src];
+    html += `<div class="ev">
+      <span class="dot" style="background:${sc.color}"></span>
+      <div class="row1">
+        <span class="type">${e.type}</span>
+        <span class="badge" style="color:${sc.color}">${sc.label}</span>
+        <span class="badge">${e.cat}</span>
+        <span class="ts">seq ${String(e.seq).padStart(2,"0")} · ${e.ts.replace("T"," ").replace("Z"," UTC")}</span>
+      </div>
+      <div class="sum">${e.sum}</div>
+      <div class="sigrow">
+        <span class="siglabel">SIGNAL_STRENGTH</span>
+        <span class="sigtrack"><span class="sigfill" style="width:${e.sig*100}%;background:${sigColor(e.sig)}"></span></span>
+        <span class="sigval">${e.sig.toFixed(2)}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById("tl").innerHTML = html;
+}
+
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+function renderJSON(ch){
+  const k=s=>`<span class="j-key">"${s}"</span>`, st=s=>`<span class="j-str">"${esc(String(s))}"</span>`,
+        n=v=>`<span class="j-num">${v}</span>`, nul=`<span class="j-null">null</span>`, p=s=>`<span class="j-pun">${s}</span>`;
+  let out = `${p("{")}\n  ${k("schema")}${p(":")} ${st("chron/1.0")}${p(",")}\n`;
+  out += `  ${k("entity")}${p(":")} ${p("{")} ${k("id")}${p(":")} ${st(ENT[lens].id)}${p(",")} ${k("kind")}${p(":")} ${st(ENT[lens].kind)}${p(",")} ${k("name")}${p(":")} ${st(ENT[lens].name)} ${p("}")}${p(",")}\n`;
+  out += `  ${k("window")}${p(":")} ${p("{")} ${k("from")}${p(":")} ${st(ch[0].ts)}${p(",")} ${k("to")}${p(":")} ${nul} ${p("}")}${p(",")}  <span class="j-pun">// to: null = live</span>\n`;
+  out += `  ${k("projection")}${p(":")} ${p("{")} ${k("lens")}${p(":")} ${st(lens)}${p(",")} ${k("as_of")}${p(":")} ${st("2026-06-10T00:00:00Z")} ${p("}")}${p(",")}\n`;
+  out += `  ${k("events")}${p(":")} ${p("[")}\n`;
+  ch.forEach((e,i)=>{
+    out += `    ${p("{")} ${k("seq")}${p(":")} ${n(e.seq)}${p(",")} ${k("ts")}${p(":")} ${st(e.ts)}${p(",")} ${k("event_type")}${p(":")} ${st(e.type)}${p(",")} ${k("category")}${p(":")} ${st(e.cat)}${p(",")} ${k("source")}${p(":")} ${st(SRC[e.src].label.toLowerCase())}${p(",")}\n`;
+    out += `      ${k("delta_prev_seconds")}${p(":")} ${e.delta_prev_seconds===null?nul:n(e.delta_prev_seconds)}${p(",")} ${k("interval")}${p(":")} ${e.delta_prev_seconds===null?nul:st(human(e.delta_prev_seconds))}${p(",")} ${k("signal_strength")}${p(":")} ${n(e.sig.toFixed(2))}${p(",")}\n`;
+    out += `      ${k("attributes")}${p(":")} ${p(JSON.stringify(e.attrs)===undefined?"{}":"")}${esc(JSON.stringify(e.attrs))}${p(",")}\n`;
+    out += `      ${k("related_entities")}${p(":")} ${p("[")}${e.ents.filter(x=>x!==lens).map(x=>st(ENT[x].id)).join(p(", "))||""}${p("]")}${p(",")}\n`;
+    out += `      ${k("text_summary")}${p(":")} ${st(e.sum)}\n    ${p("}")}${i<ch.length-1?p(","):""}\n`;
+  });
+  out += `  ${p("]")}\n${p("}")}`;
+  document.getElementById("jsonout").innerHTML = out;
+}
+
+function renderText(){
+  const ch = project(lens);
+  const slider = document.getElementById("budget");
+  slider.max = ch.length; if(+slider.value > ch.length) slider.value = ch.length;
+  const budget = +slider.value;
+  // retention prior: keep top-N by signal_strength (ties → recency), re-sort chronologically
+  const ranked = [...ch].sort((a,b)=> b.sig - a.sig || new Date(b.ts)-new Date(a.ts));
+  const keep = new Set(ranked.slice(0,budget).map(e=>e.seq));
+  const dropped = ch.length - budget;
+  document.getElementById("bval").innerHTML = `${budget} / ${ch.length} events kept · <b>${dropped} truncated</b>`;
+  let out = `<span class="t-head">CHRON</span>  ${ENT[lens].name} · ${ENT[lens].kind}   <span class="t-ts">as_of 2026-06-10 · window ${fdate(ch[0].ts)} → live</span>\n`;
+  out += `<span class="t-head">NOTE</span>   truncated to ${budget} events by retention prior (signal_strength)\n\n`;
+  ch.forEach(e=>{
+    const line = `<span class="t-seq">[${String(e.seq).padStart(2,"0")}]</span> <span class="t-ts">${fdate(e.ts)}</span> <span class="t-delta">(Δ ${human(e.delta_prev_seconds)})</span> <span class="t-src">${SRC[e.src].label}</span> ${e.type} — ${esc(e.sum)}`;
+    out += keep.has(e.seq) ? line+"\n" : `<span class="t-drop">[${String(e.seq).padStart(2,"0")}] · truncated (signal ${e.sig.toFixed(2)})</span>\n`;
+  });
+  document.getElementById("textout").innerHTML = out;
+}
+
+// ---------- wiring ----------
+function setLens(l){
+  lens = l;
+  document.querySelectorAll(".pill").forEach(b=>b.classList.toggle("on", b.dataset.lens===l));
+  const ch = project(lens);
+  renderStats(ch); renderTimeline(ch); renderJSON(ch); renderText();
+}
+function setView(v){
+  viewName = v;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.v===v));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  document.getElementById("v-"+v).classList.add("on");
+}
+setLens("acme");
+</script>
+
+
+</body></html>

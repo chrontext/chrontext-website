@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>chrontext</title>
+<meta name="description" content="Chrontext — the AI-native context layer for enterprise data. Turn fragmented enterprise data into Chrons: chronological, entity-centric event streams. The long-term memory for enterprise AI and agents.">
+<link rel="icon" type="image/png" href="./favicon.png">
+<meta property="og:title" content="Chrontext — the system of context">
+<meta property="og:description" content="The AI-native context layer for enterprise data. The long-term memory for enterprise AI and agents.">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg:#0C1226; --bg2:#070B18; --card:#151E3A; --card2:#1B2647; --line:#2A3658;
+    --tx:#EEF2FB; --mut:#94A1C2; --dim:#64719B;
+    --aqua:#35E0C2; --indi:#8B93F8; --amber:#F5A524; --red:#F2576B; --green:#55D6A0;
+    --mono:'Consolas','SF Mono','Menlo','Liberation Mono',monospace;
+    --sans:'Trebuchet MS','Segoe UI',system-ui,-apple-system,sans-serif;
+    --maxw:1140px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--tx);font-family:var(--sans);line-height:1.55;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:rgba(53,224,194,.25)}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 26px}
+
+  /* ---------- shared type ---------- */
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:3px;color:var(--aqua);
+    font-weight:700;text-transform:uppercase;display:flex;align-items:center;gap:12px}
+  .eyebrow .seq{color:var(--dim);font-weight:700}
+  .eyebrow .seq::after{content:"";display:inline-block;width:26px;height:1px;background:var(--line);
+    vertical-align:middle;margin-left:12px}
+  h2.head{font-size:clamp(27px,3.6vw,40px);line-height:1.12;font-weight:700;margin:16px 0 14px;letter-spacing:-.01em}
+  .lead{color:var(--mut);font-size:clamp(15px,1.6vw,17px);max-width:62ch;line-height:1.6}
+  .lead b{color:var(--tx);font-weight:600}
+  .mono{font-family:var(--mono)}
+  .aqua{color:var(--aqua)} .indi{color:var(--indi)} .amber{color:var(--amber)}
+  .green{color:var(--green)} .red{color:var(--red)}
+
+  /* ---------- buttons ---------- */
+  .btn{display:inline-flex;align-items:center;gap:9px;font-family:var(--sans);font-size:14.5px;
+    font-weight:700;padding:12px 22px;border-radius:9px;cursor:pointer;border:1px solid transparent;
+    transition:transform .12s ease,background .15s ease,border-color .15s ease,color .15s ease;white-space:nowrap}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--aqua);color:#06231D;border-color:var(--aqua)}
+  .btn-primary:hover{background:#5cebd2;box-shadow:0 0 0 4px rgba(53,224,194,.14)}
+  .btn-ghost{background:transparent;color:var(--tx);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--indi);color:#fff;background:rgba(139,147,248,.08)}
+  .btn .arr{transition:transform .15s ease}
+  .btn:hover .arr{transform:translateX(3px)}
+
+  /* ---------- nav ---------- */
+  header.nav{position:sticky;top:0;z-index:60;background:rgba(8,12,24,.78);
+    backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid transparent;transition:border-color .25s}
+  header.nav.scrolled{border-bottom-color:var(--line)}
+  .nav-inner{max-width:var(--maxw);margin:0 auto;padding:13px 26px;display:flex;align-items:center;gap:18px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .brand img{height:26px;width:auto;display:block}
+  .brand .word{font-size:20px;font-weight:700;letter-spacing:-.02em}
+  .nav-links{display:flex;gap:26px;margin-left:auto;align-items:center}
+  .nav-links a:not(.btn){font-size:14px;color:var(--mut);transition:color .15s;position:relative}
+  .nav-links a:not(.btn):hover{color:var(--tx)}
+  .nav-cta{margin-left:4px}
+  .nav-links .btn{padding:9px 16px;font-size:13.5px}
+  .nav-cta-2{font-weight:600}
+
+  /* ---------- hero ---------- */
+  section.hero{position:relative;padding:64px 0 76px}
+  .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:54px;align-items:center}
+  .hero-kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:3px;color:var(--aqua);font-weight:700;
+    text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:11px}
+  .hero-kicker .dotpulse{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+  h1{font-size:clamp(34px,5.2vw,58px);line-height:1.05;font-weight:700;letter-spacing:-.025em;margin-bottom:22px}
+  h1 .grad{color:var(--aqua)}
+  .hero p.sub{color:var(--mut);font-size:clamp(15.5px,1.7vw,18.5px);line-height:1.55;max-width:54ch;margin-bottom:30px}
+  .hero p.sub b{color:var(--tx);font-weight:600}
+  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  .hero-note{margin-top:18px;font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.4px}
+
+  /* ---------- hero chron card (the signature visual) ---------- */
+  .chroncard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;
+    box-shadow:0 24px 60px -28px rgba(0,0,0,.7)}
+  .cc-top{display:flex;align-items:center;gap:9px;padding:0 2px 13px;border-bottom:1px solid var(--line);margin-bottom:15px}
+  .cc-top .tag{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase}
+  .cc-top .lens{font-family:var(--mono);font-size:11.5px;color:var(--aqua);font-weight:700}
+  .cc-top .live{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--green);
+    display:flex;align-items:center;gap:6px}
+  .cc-top .live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+  .tl{position:relative;padding-left:26px}
+  .tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+  .ev{position:relative;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:11px 13px}
+  .ev .dot{position:absolute;left:-24px;top:14px;width:12px;height:12px;border-radius:50%;border:3px solid var(--card)}
+  .ev .r1{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .ev .typ{font-family:var(--mono);font-weight:700;font-size:13px}
+  .ev .bd{font-family:var(--mono);font-size:8.5px;letter-spacing:1px;padding:2px 6px;border-radius:4px;
+    background:var(--bg2);border:1px solid var(--line);color:var(--mut);text-transform:uppercase}
+  .ev .sq{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--dim)}
+  .ev .sm{color:var(--mut);font-size:11.5px;margin-top:4px;line-height:1.35}
+  .ev .sig{display:flex;align-items:center;gap:7px;margin-top:8px}
+  .ev .sigt{flex:0 0 88px;height:4px;border-radius:3px;background:var(--bg2);overflow:hidden}
+  .ev .sigf{height:100%;border-radius:3px}
+  .ev .sigv{font-family:var(--mono);font-size:9.5px;color:var(--mut)}
+  .gap{height:26px;display:flex;align-items:center;padding-left:2px;gap:8px}
+  .gap .gl{font-family:var(--mono);font-size:9.5px;color:var(--amber);background:var(--card);
+    padding:2px 7px;border:1px dashed var(--amber);border-radius:5px}
+  .gap .ga{font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:.5px}
+
+  /* ---------- generic section ---------- */
+  section.band{padding:70px 0;border-top:1px solid var(--line)}
+  .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  /* ---------- problem: source chips ---------- */
+  .prob-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;margin-top:8px}
+  .frag{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .frag .fl{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:9px}
+  .chip{font-family:var(--mono);font-size:12px;padding:8px 13px;border-radius:8px;background:var(--card);
+    border:1px solid var(--line);color:var(--mut)}
+  .frag .nolink{margin-top:16px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--red);
+    letter-spacing:1px;border-top:1px dashed var(--line);padding-top:13px}
+
+  /* ---------- feature cards ---------- */
+  .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:30px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px 20px 18px;
+    transition:border-color .18s ease,transform .18s ease}
+  .card:hover{border-color:var(--indi);transform:translateY(-3px)}
+  .card .ci{font-family:var(--mono);font-size:11px;color:var(--aqua);letter-spacing:1px;margin-bottom:9px}
+  .card h3{font-size:16.5px;font-weight:700;margin-bottom:7px}
+  .card p{color:var(--mut);font-size:13.5px;line-height:1.5}
+
+  /* ---------- demo gate ---------- */
+  .demo-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:58px;align-items:stretch;margin-top:10px}
+  .demo-copy{display:flex;flex-direction:column}
+  .demo-copy-body{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .gate{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:26px 26px 24px}
+  .gate .gh{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--aqua);text-transform:uppercase;margin-bottom:6px}
+  .gate h3{font-size:19px;font-weight:700;margin-bottom:16px}
+  .field{margin-bottom:15px}
+  .field label{display:block;font-size:12.5px;color:var(--mut);margin-bottom:7px;font-weight:600}
+  .field label .opt{color:var(--dim);font-weight:400}
+  .field input,.field textarea{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:9px;
+    color:var(--tx);font-family:var(--sans);font-size:14px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+  .field input::placeholder,.field textarea::placeholder{color:var(--dim)}
+  .field input:focus,.field textarea:focus{outline:none;border-color:var(--aqua);box-shadow:0 0 0 3px rgba(53,224,194,.13)}
+  .field textarea{resize:vertical;min-height:84px;line-height:1.45}
+  .field .row{display:flex;justify-content:space-between;align-items:baseline}
+  .counter{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
+  .hp{position:absolute;left:-9999px;opacity:0;height:0;width:0}
+  .err{color:var(--red);font-size:12px;margin-top:7px;min-height:16px;font-weight:600}
+  .gate .btn{width:100%;justify-content:center;margin-top:4px}
+  .gate .fineprint{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:14px;line-height:1.5;letter-spacing:.2px}
+  .demo-copy ul.feat{list-style:none;margin-top:18px;display:flex;flex-direction:column;gap:11px}
+  .demo-copy ul.feat li{position:relative;padding-left:18px;font-size:14px;color:var(--mut);line-height:1.5}
+  .demo-copy ul.feat li::before{content:"›";position:absolute;left:0;top:0;color:var(--aqua);font-family:var(--mono);font-weight:700}
+  .demo-copy ul.feat b{color:var(--tx);font-weight:600}
+
+  /* ---------- use case ---------- */
+  .uc-grid{display:grid;grid-template-columns:1fr .82fr;gap:46px;align-items:stretch;margin-top:8px}
+  .uc-copy{display:flex;flex-direction:column}
+  .uc-copy-body{flex:1;display:flex;flex-direction:column;justify-content:center}
+  .uc-points{display:flex;flex-direction:column;gap:16px;margin-top:22px}
+  .uc-points .pt{display:flex;gap:14px}
+  .uc-points .pt .n{font-family:var(--mono);font-size:12px;color:var(--amber);font-weight:700;flex:0 0 auto;margin-top:2px}
+  .uc-points .pt p{color:var(--mut);font-size:14px;line-height:1.5}
+  .uc-points .pt p b{color:var(--tx);font-weight:600}
+  .vibe{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:20px;align-self:start}
+  .vibe .vh{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-bottom:4px}
+  .vibe .vt{font-size:14px;color:var(--tx);font-weight:600;margin-bottom:16px}
+  .spark{display:flex;align-items:flex-end;gap:0;height:96px;position:relative;margin:6px 0 2px}
+  .spark .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px}
+  .spark .bar{width:78%;border-radius:4px 4px 0 0;background:linear-gradient(180deg,var(--red),#b83a4d)}
+  .spark .dlt{font-family:var(--mono);font-size:9.5px;color:var(--amber)}
+  .spark .lbl{font-family:var(--mono);font-size:9px;color:var(--dim);margin-top:7px;text-align:center;line-height:1.2}
+  .vibe .cancel{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px;font-family:var(--mono);
+    font-size:11px;color:var(--mut);display:flex;justify-content:space-between}
+  .vibe .cancel .x{color:var(--red);font-weight:700}
+
+  /* ---------- moat ---------- */
+  .moat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:30px}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:20px;border-top:2px solid var(--indi)}
+  .mcard .mk{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;color:var(--indi);text-transform:uppercase;margin-bottom:11px}
+  .mcard h3{font-size:16px;font-weight:700;margin-bottom:8px}
+  .mcard p{color:var(--mut);font-size:13px;line-height:1.5}
+  .oss{margin-top:24px;background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:20px 22px;
+    display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+  .oss .ot{flex:1;min-width:260px}
+  .oss .ok{font-family:var(--mono);font-size:11px;letter-spacing:2px;color:var(--aqua);text-transform:uppercase;margin-bottom:6px}
+  .oss .ot h3{font-size:16.5px;font-weight:700;margin-bottom:6px}
+  .oss .ot p{color:var(--mut);font-size:13.5px;line-height:1.5}
+  /* EDIT LATER: when the Chron spec is public, swap this badge for a real link to the repo/spec. */
+  .oss .specbadge{font-family:var(--mono);font-size:11px;color:var(--dim);border:1px dashed var(--line);
+    border-radius:8px;padding:9px 14px;letter-spacing:1px;white-space:nowrap}
+
+  /* ---------- team ---------- */
+  .team-grid{display:grid;grid-template-columns:.62fr 1fr;gap:44px;align-items:start;margin-top:10px}
+  .founder{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:24px}
+  .founder .ava{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--indi),var(--aqua));
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:19px;color:#0a1024;margin-bottom:14px}
+  .founder .fn{font-size:19px;font-weight:700}
+  .founder .fr{font-family:var(--mono);font-size:12px;color:var(--aqua);margin-top:3px}
+  .founder .logos{margin-top:18px;border-top:1px solid var(--line);padding-top:15px;display:flex;flex-wrap:wrap;gap:8px}
+  .founder .logos span{font-family:var(--mono);font-size:11px;color:var(--mut);background:var(--bg2);
+    border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+  .team-bullets{display:flex;flex-direction:column;gap:14px}
+  .team-bullets li{list-style:none;position:relative;padding-left:20px;color:var(--mut);font-size:14.5px;line-height:1.5}
+  .team-bullets li::before{content:"";position:absolute;left:0;top:9px;width:7px;height:7px;border-radius:50%;background:var(--aqua)}
+  .team-bullets li b{color:var(--tx);font-weight:600}
+  .quote{margin-top:22px;font-size:17px;font-style:italic;color:var(--tx);border-left:2px solid var(--aqua);padding-left:16px;line-height:1.5}
+
+  /* ---------- CTA ---------- */
+  section.cta{padding:78px 0;border-top:1px solid var(--line);text-align:center}
+  section.cta h2{font-size:clamp(26px,3.6vw,40px);font-weight:700;letter-spacing:-.02em;max-width:760px;margin:14px auto 0;line-height:1.12}
+  .cta-paths{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:760px;margin:38px auto 0;text-align:left}
+  .path{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:24px;display:flex;flex-direction:column}
+  .path.primary{border-color:var(--aqua);box-shadow:0 0 0 1px rgba(53,224,194,.25)}
+  .path .pk{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px}
+  .path.primary .pk{color:var(--aqua)} .path.customer .pk{color:var(--indi)}
+  .path h3{font-size:18px;font-weight:700;margin-bottom:8px}
+  .path p{color:var(--mut);font-size:13.5px;line-height:1.5;margin-bottom:18px;flex:1}
+  .path .btn{align-self:flex-start}
+  .cta-strip{margin-top:32px;font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.5px;
+    display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .cta-strip span{color:var(--mut)} .cta-strip .sep{color:var(--line)}
+
+  /* ---------- footer ---------- */
+  footer.site{border-top:1px solid var(--line);padding:34px 0 40px;background:var(--bg2)}
+  .foot-inner{max-width:var(--maxw);margin:0 auto;padding:0 26px;display:flex;flex-wrap:wrap;gap:20px;
+    justify-content:space-between;align-items:center}
+  .foot-brand{display:flex;align-items:center;gap:11px}
+  .foot-brand img{height:22px}
+  .foot-brand .ft{font-size:16px;font-weight:700}
+  .foot-brand .fs{font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:1px;margin-left:4px}
+  .foot-links{display:flex;gap:22px;font-family:var(--mono);font-size:12px;color:var(--mut);flex-wrap:wrap;align-items:center}
+  .foot-links a:hover{color:var(--aqua)}
+  .foot-links .muted{color:var(--dim)}
+  .foot-copy{width:100%;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.5px;margin-top:8px}
+
+  /* ---------- demo gate teaser underlay ---------- */
+  .gate-wrap{position:relative;padding-top:52px}
+  .gate-wrap > .gate{position:relative;z-index:3}
+  .teaser{position:absolute;inset:0;z-index:1;pointer-events:none}
+  .tc{position:absolute;left:-46px;right:24px;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:13px 15px;box-shadow:0 18px 44px -22px rgba(0,0,0,.85);filter:blur(.3px)}
+  .tc-a{top:10px;z-index:2;opacity:.62}
+  .tc-b{top:-8px;left:-58px;right:40px;z-index:1;opacity:.34;filter:blur(1px)}
+  .t-top{display:flex;align-items:center;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .t-tag{font-family:var(--mono);font-size:9px;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase}
+  .t-lens{font-family:var(--mono);font-size:10.5px;color:var(--aqua);font-weight:700}
+  .t-live{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--green)}
+  .t-row{display:flex;align-items:center;gap:9px;padding:6px 0}
+  .t-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+  .t-typ{font-family:var(--mono);font-size:11.5px;color:var(--tx)}
+  .t-meta{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--dim)}
+
+  /* ---------- use case fork visual ---------- */
+  .fork{width:100%;height:auto;display:block;margin-top:2px}
+  .fork text{font-family:var(--sans)}
+  .fork .ft{font-family:var(--mono)}
+
+  /* ---------- founder LinkedIn ---------- */
+  .founder .li-link{display:inline-flex;align-items:center;gap:7px;margin-top:16px;font-family:var(--mono);
+    font-size:11.5px;color:var(--aqua);border:1px solid var(--line);border-radius:8px;padding:8px 12px;
+    transition:border-color .15s ease,color .15s ease}
+  .founder .li-link:hover{border-color:var(--aqua);color:#7ff0dd}
+  .founder .li-link svg{flex:0 0 auto}
+
+  /* ---------- dual CTA row (design-partner chip) ---------- */
+  .path-cta{display:flex;gap:9px;flex-wrap:wrap}
+  .path-cta .btn{padding:11px 16px;font-size:14px}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .hero-grid,.prob-grid,.demo-grid,.uc-grid,.team-grid{grid-template-columns:1fr;gap:34px}
+    .cards,.moat-cards,.cta-paths{grid-template-columns:1fr}
+    .nav-links a:not(.nav-cta){display:none}
+    .teaser{display:none}
+    .gate-wrap{padding-top:0}
+    .hero-grid{gap:38px}
+    section.hero{padding:42px 0 56px}
+    .order-visual{order:2}
+  }
+  @media (max-width:620px){
+    .nav-cta-2{display:none}
+    .brand .word{display:none}
+    .cta-paths{gap:14px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    .reveal{opacity:1;transform:none;transition:none}
+    .btn,.card,.path{transition:none}
+    .dotpulse,.cc-top .live::before{animation:none!important}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .dotpulse{animation:pulse 2.4s ease-in-out infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top" aria-label="Chrontext home">
+      <img src="./chrontext-logo.png" alt="Chrontext logo">
+      <span class="word">chrontext</span>
+    </a>
+    <nav class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#demo">Demo</a>
+      <a href="#usecase">Use case</a>
+      <a href="#team">Team</a>
+      <a href="#explore" class="btn btn-ghost nav-cta nav-cta-2">Explore Chrontext</a>
+      <a href="#partner" class="btn btn-primary nav-cta">Become a design partner</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-text">
+      <div class="hero-kicker"><span class="dotpulse"></span><b>CHRONTEXT</b>&nbsp;·&nbsp;<i>THE SYSTEM OF CONTEXT</i></div>
+      <h1>The AI-native <span class="grad">context layer</span> for enterprise data.</h1>
+      <p class="sub">Turn fragmented enterprise data into <b>Chrons</b> — chronological, entity-centric event streams. The long-term memory for enterprise AI and agents.</p>
+      <div class="hero-cta">
+        <a href="#partner" class="btn btn-primary">Become a design partner <span class="arr">→</span></a>
+        <a href="#demo" class="btn btn-ghost">See a live Chron <span class="arr">→</span></a>
+      </div>
+      <div class="hero-note">// one event universe -- re-centered on any entity</div>
+    </div>
+
+    <!-- signature visual: a live Chron -->
+    <div class="hero-visual order-visual">
+      <div class="chroncard" role="img" aria-label="A Chron for the customer Acme Corp: four cross-system events in time order — a usage dip, a support ticket opened, the ticket escalated, and an exec email — with the gaps between events shrinking, marking an accelerating churn signal.">
+        <div class="cc-top">
+          <span class="tag">CHRON ·</span>
+          <span class="lens">Acme&nbsp;Corp</span>
+          <span class="tag" style="color:var(--dim)">customer</span>
+          <span class="live">live</span>
+        </div>
+        <div class="tl">
+          <div class="ev">
+            <span class="dot" style="background:var(--indi)"></span>
+            <div class="r1"><span class="typ">usage_dip</span><span class="bd">product</span><span class="sq">seq 07</span></div>
+            <div class="sm">WAU −12% MoM (214 → 188).</div>
+            <div class="sig"><div class="sigt"><div class="sigf" style="width:70%;background:var(--amber)"></div></div><span class="sigv">0.70</span></div>
+          </div>
+          <div class="gap"><span class="gl">Δ 9d</span></div>
+          <div class="ev">
+            <span class="dot" style="background:var(--aqua)"></span>
+            <div class="r1"><span class="typ">ticket_opened</span><span class="bd">support</span><span class="sq">seq 08</span></div>
+            <div class="sm">P2 — API rate-limit errors in production.</div>
+            <div class="sig"><div class="sigt"><div class="sigf" style="width:70%;background:var(--amber)"></div></div><span class="sigv">0.70</span></div>
+          </div>
+          <div class="gap"><span class="gl">Δ 3d</span><span class="ga">← accelerating</span></div>
+          <div class="ev">
+            <span class="dot" style="background:var(--red)"></span>
+            <div class="r1"><span class="typ">ticket_escalated</span><span class="bd">support</span><span class="sq">seq 09</span></div>
+            <div class="sm">Escalated to engineering — SLA breached by 18h.</div>
+            <div class="sig"><div class="sigt"><div class="sigf" style="width:85%;background:var(--red)"></div></div><span class="sigv">0.85</span></div>
+          </div>
+          <div class="gap"><span class="gl">Δ 1.5d</span><span class="ga">← accelerating</span></div>
+          <div class="ev">
+            <span class="dot" style="background:var(--red)"></span>
+            <div class="r1"><span class="typ">exec_email</span><span class="bd">email</span><span class="sq">seq 10</span></div>
+            <div class="sm">VP Eng: “this is blocking our launch.”</div>
+            <div class="sig"><div class="sigt"><div class="sigf" style="width:80%;background:var(--red)"></div></div><span class="sigv">0.80</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 01 PROBLEM ============ -->
+<section class="band" id="problem">
+  <div class="wrap reveal">
+    <div class="prob-grid">
+      <div>
+        <div class="eyebrow"><span class="seq">01</span>Problem</div>
+        <h2 class="head">Enterprise AI is starving for context</h2>
+        <p class="lead">Your data is scattered across warehouses, lakes, and dozens of SaaS apps. Transformers and agents reason over <b>sequences in time</b> — but enterprise data lives in disconnected tables and snapshots.</p>
+        <p class="lead" style="margin-top:14px">So AI/ML teams rebuild the same brittle, incomplete, leak-prone timelines by hand — <b>inconsistent, slow, and impossible to reuse</b>. The bottleneck to AI value isn't the model. It's getting the data AI-ready.</p>
+      </div>
+      <div class="frag">
+        <div class="fl">Fragmented today</div>
+        <div class="chips">
+          <span class="chip">Data Lake</span><span class="chip">Warehouse</span><span class="chip">ERP</span><span class="chip">CRM</span>
+          <span class="chip">Billing</span><span class="chip">Support</span><span class="chip">Product</span><span class="chip">SaaS Apps</span>
+        </div>
+        <div class="nolink">— no shared timeline —</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 02 HOW IT WORKS ============ -->
+<section class="band" id="how">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="seq">02</span>Solution | New primitive: The Chron</div>
+    <h2 class="head">One universe. Any lens. Time as a first-class axis.</h2>
+    <p class="lead">A <b>Chron</b> is a chronologically ordered, timestamped event stream centered on any entity — customer, rep, shipment, SKU, machine, agent. Store the event universe once; project it per entity. Two serving surfaces: real-time context for inference, and leakage-free, point-in-time exports for training.</p>
+    <div class="cards">
+      <div class="card">
+        <div class="ci">// store once → project per entity</div>
+        <h3>Entity-lens projection</h3>
+        <p>The entity is a variable. The same universe re-centers on whichever entity you choose — Chrons stay consistent, with no copies to drift.</p>
+      </div>
+      <div class="card">
+        <div class="ci">// delta_prev · interval</div>
+        <h3>Cadence is signal</h3>
+        <p>The gaps and acceleration between events are captured natively, not discarded. Shrinking deltas are a “vibe shift” that AI transformers can attend to.</p>
+      </div>
+      <div class="card">
+        <div class="ci">// as_of — point-in-time</div>
+        <h3>Leakage-free truth</h3>
+        <p>Every attribute as it was, when it was. No future facts bleed into training or inference — reproducible, audit-ready serving.</p>
+      </div>
+      <div class="card">
+        <div class="ci">// bitemporal · append-only</div>
+        <h3>As-of-correct history</h3>
+        <p>Best-effort backfill, as-of-correct from connection forward. We mark unknown rather than fabricate the past — and Chrons sharpen as we accumulate.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 03 DEMO (GATE) ============ -->
+<section class="band" id="demo">
+  <div class="wrap reveal">
+    <div class="demo-grid">
+      <div class="demo-copy">
+        <div class="eyebrow"><span class="seq">03</span>Interactive demo</div>
+        <h2 class="head">See the timeline a transformer sees</h2>
+        <div class="demo-copy-body">
+        <p class="lead">The <b>Entity Lens viewer</b> is an interactive product feature, live. Pick an entity and watch one event universe re-center as that entity's Chron — then view the same Chron three ways:</p>
+        <ul class="feat">
+          <li><b>Timeline</b> — the cross-system event stream, for humans.</li>
+          <li><b>JSON</b> — the canonical Chron, for models.</li>
+          <li><b>Text</b> — the LLM-ready context, for AI.</li>
+        </ul>
+        <p class="lead" style="margin-top:18px">Drop in your email + AI context needs and it opens in a new view — <i>no demo call required.</i></p>
+        </div>
+      </div>
+
+      <div class="gate-wrap">
+        <div class="teaser" aria-hidden="true">
+          <div class="tc tc-b">
+            <div class="t-top"><span class="t-tag">CHRON ·</span><span class="t-lens">Globex Inc</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--indi)"></span><span class="t-typ">contract_renewed</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--aqua)"></span><span class="t-typ">usage_baseline</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--amber)"></span><span class="t-typ">ticket_opened</span></div>
+          </div>
+          <div class="tc tc-a">
+            <div class="t-top"><span class="t-tag">CHRON ·</span><span class="t-lens">Acme Corp</span><span class="t-live">live</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--indi)"></span><span class="t-typ">usage_dip</span><span class="t-meta">−12% WAU</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--amber)"></span><span class="t-typ">ticket_opened</span><span class="t-meta">P2</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--red)"></span><span class="t-typ">ticket_escalated</span><span class="t-meta">SLA −18h</span></div>
+            <div class="t-row"><span class="t-dot" style="background:var(--red)"></span><span class="t-typ">exec_email</span></div>
+          </div>
+        </div>
+      <div class="gate">
+        <div class="gh">Open the interactive demo</div>
+        <h3>One Chron, every serialization.</h3>
+        <form id="demoForm" novalidate>
+          <div class="field">
+            <label for="email">Work email</label>
+            <input type="email" id="email" name="email" autocomplete="email" placeholder="you@company.com" required>
+          </div>          
+          <div class="field">
+            <div class="row">
+              <label for="interest">What is your AI context need? <span class="opt">(optional)</span></label>
+            </div>
+            <textarea id="interest" name="interest" maxlength="500" placeholder="A use case, your data stack, what you're trying to build…"></textarea>
+            <div class="row"><span></span><span class="counter"><span id="cc">0</span>/500</span></div>
+          </div>
+          <!-- honeypot: real people leave this empty -->
+          <input class="hp" type="text" name="company_website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="err" id="formErr" role="alert"></div>
+          <button type="submit" class="btn btn-primary" id="gateBtn">Open the demo <span class="arr">→</span></button>
+          <div class="fineprint">
+            <style>
+              .tab-space { margin-left: 20px; }
+            </style>
+            <span class="tab-space"></span>We'll email you only about Chrontext. No list-selling, ever.
+          </div>          
+        </form>
+      </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 04 USE CASE ============ -->
+<section class="band" id="usecase">
+  <div class="wrap reveal">
+    <div class="uc-grid">
+      <div class="uc-copy">
+        <div class="eyebrow"><span class="seq">04</span>Beachhead Use Case · Churn → Retention</div>
+        <h2 class="head">The churn you can't see coming</h2>
+        <div class="uc-copy-body">
+        <p class="lead">Customers don't churn overnight — they degrade across systems. A usage dip here, a support ticket there, sentiment slipping, billing slowing. <b>No single tool sees it at once.</b> It's the boiling-frog problem.</p>
+        <div class="uc-points">
+          <div class="pt"><span class="n">01</span><p>The Chron makes the whole <b>cross-system timeline</b> legible to a transformer — surfacing subtle vibe shifts well before the cancel point.</p></div>
+          <div class="pt"><span class="n">02</span><p>A thin, use-case oriented, <b>churn-risk endpoint and app</b> built on general-purpose Chron primitive for the technology-light enterprise buyer.</p></div>
+          <div class="pt"><span class="n">03</span><p>The value is <b>net revenue retention</b> — hard dollars saved, CFO-legible. By a founder who has built for such use cases multiple times before.</p></div>
+        </div>
+        </div>
+      </div>
+      <div class="vibe">
+        <div class="vh">Acme Corp · cadence</div>
+        <div class="vt">Shrinking gaps = the vibe shift</div>
+        <svg class="fork" viewBox="0 0 430 412" role="img" aria-label="A Chron timeline for Acme Corp. Three events accelerate with shrinking gaps — usage dip, ticket opened, ticket escalated. At an agent-intercept point the path forks: without Chrontext the dashed red path continues to a cancel point and the customer churns; with Chrontext the green path leads to the customer being retained.">
+          <line x1="258" y1="46" x2="288" y2="46" stroke="var(--red)" stroke-width="2" stroke-dasharray="5 4"/>
+          <text class="fs" x="294" y="50" font-size="11" fill="var(--mut)">without Chrontext</text>
+          <line x1="258" y1="68" x2="288" y2="68" stroke="var(--green)" stroke-width="2.5"/>
+          <text class="fs" x="294" y="72" font-size="11" fill="var(--mut)">with Chrontext</text>
+
+          <line x1="64" y1="40" x2="64" y2="202" stroke="var(--line)" stroke-width="2"/>
+
+          <text class="ft" x="54" y="80"  font-size="11" fill="var(--amber)" text-anchor="end">Δ 9d</text>
+          <text class="ft" x="54" y="134" font-size="11" fill="var(--amber)" text-anchor="end">Δ 3d</text>
+          <text class="ft" x="54" y="182" font-size="11" fill="var(--amber)" text-anchor="end">Δ 1.5d</text>
+
+          <circle cx="64" cy="48"  r="5" fill="var(--indi)"/>
+          <text class="ft" x="80" y="52"  font-size="12" fill="var(--tx)">usage_dip</text>
+          <circle cx="64" cy="108" r="5" fill="var(--amber)"/>
+          <text class="ft" x="80" y="112" font-size="12" fill="var(--tx)">ticket_opened</text>
+          <circle cx="64" cy="158" r="6" fill="var(--red)"/>
+          <text class="ft" x="80" y="162" font-size="12" fill="var(--tx)">ticket_escalated</text>
+
+          <path d="M64,206 L50,360" fill="none" stroke="var(--red)" stroke-width="2" stroke-dasharray="5 4" opacity="0.8"/>
+          <path d="M64,206 C82,300 205,330 334,350" fill="none" stroke="var(--green)" stroke-width="2.5"/>
+
+          <polygon points="64,193 73,202 64,211 55,202" fill="var(--aqua)" stroke="var(--bg)" stroke-width="1"/>
+          <rect x="84" y="192" width="132" height="19" rx="9" fill="var(--bg)" stroke="var(--aqua)" stroke-width="1"/>
+          <text class="ft" x="94" y="205" font-size="10.5" fill="var(--aqua)" letter-spacing="0.5">⚡ agent intercept</text>
+
+          <circle cx="50" cy="362" r="11" fill="var(--bg)" stroke="var(--red)" stroke-width="2"/>
+          <text class="fs" x="50" y="367" font-size="13" fill="var(--red)" text-anchor="middle" font-weight="700">✕</text>
+          <text class="fs" x="50" y="388" font-size="12" fill="var(--red)" text-anchor="middle" font-weight="700">cancel point</text>
+          <text class="ft" x="50" y="402" font-size="9.5" fill="var(--dim)" text-anchor="middle">churned</text>
+
+          <circle cx="334" cy="352" r="11" fill="var(--bg)" stroke="var(--green)" stroke-width="2"/>
+          <text class="fs" x="334" y="357" font-size="13" fill="var(--green)" text-anchor="middle" font-weight="700">✓</text>
+          <text class="fs" x="334" y="378" font-size="12" fill="var(--green)" text-anchor="middle" font-weight="700">retained</text>
+          <text class="ft" x="334" y="392" font-size="9.5" fill="var(--dim)" text-anchor="middle">saved</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 05 MOAT / WHY NOW ============ -->
+<section class="band" id="moat">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="seq">05</span>Why now · why it compounds</div>
+    <h2 class="head">Agents arrived. The data structure didn't.</h2>
+    <p class="lead">Data warehouses and lakes were built for BI and dashboards — dimensional databases were never for feeding attention-based models. The open Chron spec is designed for this and adoption is the goal. Here's what compounds underneath it:</p>
+    <div class="moat-cards">
+      <div class="mcard">
+        <div class="mk">Identity graph</div>
+        <h3>Bitemporal &amp; append-only</h3>
+        <p>As-of-correct entity resolution across every source — more accurate and more valuable with every event ingested.</p>
+      </div>
+      <div class="mcard">
+        <div class="mk">Data moat</div>
+        <h3>Your connected data is the asset</h3>
+        <p>Leakage-free point-in-time truth only accumulates by being there as it happened. Every day a customer is connected widens this gap.</p>
+      </div>
+      <div class="mcard">
+        <div class="mk">The unit AI retrieves</div>
+        <h3>The context primitive</h3>
+        <p>The Chron is what your RAG and agent stack retrieves for context. We make RAG better, not obsolete. Own the unit, own the workflow.</p>
+      </div>
+    </div>
+    <div class="oss">
+      <div class="ot">
+        <div class="ok">Own the standard</div>
+        <h3>Open spec. Commercial engine.</h3>
+        <p>The Chron spec and a reference SDK go open — every integration is a new seed. The accumulating identity graph, connected data and entity-Chrons stay in the engine.</p>
+      </div>
+      <!-- EDIT LATER: when the spec is public, replace this badge with: <a class="btn btn-ghost" href="SPEC_URL">Read the Chron spec →</a> -->
+      <div class="specbadge">open Chron spec · public release coming</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 06 TEAM ============ -->
+<section class="band" id="team">
+  <div class="wrap reveal">
+    <div class="eyebrow"><span class="seq">06</span>Team</div>
+    <h2 class="head">Built this very thing before</h2>
+    <div class="team-grid">
+      <div class="founder">
+        <div class="ava">AS</div>
+        <div class="fn">Anvesh Sati</div>
+        <div class="fr">Founder &amp; CEO</div>
+        <div class="logos">
+          <span>Shopify</span><span>Wayfair</span><span>Home Depot</span><span>Staples</span>
+        </div>
+        <a class="li-link" href="https://www.linkedin.com/in/anveshsati/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zm1.78 13.02H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+          Connect on LinkedIn ↗
+        </a>
+      </div>
+      <div>
+        <ul class="team-bullets">
+          <li>Built <b>Shopify's first at-scale GenAI CS agent</b> for a 2,000-person support org — the beachhead use case, shipped.</li>
+          <li>At Wayfair, built <b>ML stack behind $800M ad spend</b>; lead scoring for a 400-person sales org and <b>churn prevention for an 2000-person CS team</b>.</li>
+          <li>0→1 build of Home Depot's in-sourced ad-server; <b>doubled Home Depot's ad-network revenue to $150M</b>; tripled ad margin.</li>
+          <li>Multiple patents in data &amp; ML/AI space. <b>Technical founder</b> with investment-banking & finance background.</li>
+        </ul>
+        <p class="quote">“I know this buyer, this pain, and how to ship this.”</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 07 CTA ============ -->
+<section class="cta" id="partner">
+  <div class="wrap">
+    <div class="eyebrow" style="justify-content:center"><span class="seq" style="--x:0">07</span>Next</div>
+    <h2>If your AI roadmap is moving slower than your ambition — let's talk.</h2>
+    <div class="cta-paths">
+      <div class="path customer" id="explore">
+        <div class="pk">Interested teams</div>
+        <h3>Explore Chrons for your data</h3>
+        <p>Build the context substrate your enterprise AI workflow will need. Let us walk you through the demo and explore next steps.</p>
+        <a href="#" id="exploreMail" class="btn btn-ghost">Get in touch <span class="arr">→</span></a>
+      </div>
+      <div class="path primary">
+        <div class="pk">Enterprises &amp; teams</div>
+        <h3>Become a founding design partner</h3>
+        <p>Shape the roadmap on founding-partner terms. Preferential access to the platform and direct channel to the product teams.</p>
+        <!-- EDIT LATER: set CALENDLY_URL in the config block below. Until then "Book a call" falls back to email. -->
+        <div class="path-cta">
+          <a href="#" id="bookCall" class="btn btn-primary">Book a call <span class="arr">→</span></a>
+          <a href="#" id="partnerMail" class="btn btn-ghost">Drop a note <span class="arr">→</span></a>
+        </div>
+      </div>
+    </div>
+    <div class="cta-strip">
+      <span>Design-partner conversations open</span><span class="sep">·</span><span>Live interactive demos</span><span class="sep">·</span><span>Use-case endpoints & apps</span>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site">
+  <div class="foot-inner">
+    <a class="foot-brand" href="#top">
+      <img src="./chrontext-logo.png" alt="Chrontext logo">
+      <span class="ft">chrontext</span>
+      <span class="fs">the system of context</span>
+    </a>
+    <div class="foot-links">
+      <a href="#how">How it works</a>
+      <a href="#demo">Demo</a>
+      <a href="#partner">Design partners</a>
+      <a id="footMail" href="#">info@chrontext.ai</a>
+      <span class="muted">Chron spec · coming</span>
+    </div>
+    <div class="foot-copy">© 2026 Chrontext · The AI-native context layer for enterprise data.</div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   CHRONTEXT SITE CONFIG  —  edit these three values to go live
+   ============================================================ */
+const CONFIG = {
+  // 1) Paste your Web3Forms access key (free at web3forms.com — set the
+  //    receiving address there to info@chrontext.ai). Leave "" to skip
+  //    email-sending for now; the demo gate still validates + opens the demo.
+  WEB3FORMS_KEY: "edb515a9-1ca2-4638-bf58-e0e2fb01415b",
+
+  // 2) Your Calendly (or other scheduler) link for design-partner calls.
+  //    Leave "" to fall back to an email link.
+  CALENDLY_URL: "",
+
+  // 3) Contact addresses.
+  INFO_EMAIL: "info@chrontext.ai",        // demo-request notifications + footer
+  PARTNER_EMAIL: "partner@chrontext.ai",  // design-partner "get in touch" + "book a call" fallback
+  EXPLORE_EMAIL: "explore@chrontext.ai",  // interested-customer "get in touch"
+
+  DEMO_URL: "demo.html"                    // page the gate opens on success
+};
+
+/* ---- nav border on scroll ---- */
+const nav = document.getElementById('nav');
+const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 8);
+onScroll(); window.addEventListener('scroll', onScroll, {passive:true});
+
+/* ---- scroll reveal ---- */
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!reduce && 'IntersectionObserver' in window){
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+} else {
+  document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+}
+
+/* ---- char counter ---- */
+const ta = document.getElementById('interest');
+const cc = document.getElementById('cc');
+ta.addEventListener('input', ()=>{ cc.textContent = ta.value.length; });
+
+/* ---- wire CTAs from config ---- */
+const bookCall = document.getElementById('bookCall');
+if (CONFIG.CALENDLY_URL){ bookCall.href = CONFIG.CALENDLY_URL; bookCall.target = "_blank"; bookCall.rel = "noopener"; }
+else { bookCall.href = "mailto:" + CONFIG.PARTNER_EMAIL + "?subject=" + encodeURIComponent("Design partner call — Chrontext"); }
+
+document.getElementById('partnerMail').href = "mailto:" + CONFIG.PARTNER_EMAIL + "?subject=" + encodeURIComponent("Design partner — Chrontext");
+document.getElementById('exploreMail').href = "mailto:" + CONFIG.EXPLORE_EMAIL + "?subject=" + encodeURIComponent("Exploring Chrontext");
+document.getElementById('footMail').href = "mailto:" + CONFIG.INFO_EMAIL;
+
+/* ---- demo gate: validate → (best-effort) email → redirect ---- */
+const form = document.getElementById('demoForm');
+const emailEl = document.getElementById('email');
+const errEl = document.getElementById('formErr');
+const btn = document.getElementById('gateBtn');
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  errEl.textContent = '';
+  const email = emailEl.value.trim();
+  const interest = ta.value.trim();
+  const honey = form.company_website.value;
+
+  // bot? silently drop.
+  if (honey){ window.location.href = CONFIG.DEMO_URL; return; }
+
+  if (!EMAIL_RE.test(email)){
+    errEl.textContent = 'Please enter a valid email address to open the demo.';
+    emailEl.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  const original = btn.innerHTML;
+  btn.innerHTML = 'Opening…';
+
+  // Best-effort send to info@chrontext.ai via Web3Forms (if configured).
+  // We never block the user on the network — capturing the lead is best-effort.
+  if (CONFIG.WEB3FORMS_KEY){
+    try{
+      const fd = new FormData();
+      fd.append('access_key', CONFIG.WEB3FORMS_KEY);
+      fd.append('subject', 'New Chrontext demo request');
+      fd.append('from_name', 'chrontext.ai');
+      fd.append('email', email);
+      fd.append('message', interest || '(no message provided)');
+      fd.append('botcheck', '');
+      await fetch('https://api.web3forms.com/submit', { method:'POST', body: fd });
+    }catch(_){ /* ignore — proceed to demo regardless */ }
+  }
+
+  window.location.href = CONFIG.DEMO_URL;
+});
+</script>
+</body>
+</html>
